@@ -43,47 +43,73 @@ object keywordExtraction {
     // Reading the file from disk
     val conf = new Configuration
     conf.set("textinputformat.record.delimiter", "WARC/1.0") // Splitting multiline format
-    val dataset = spark
-                    .sparkContext
-                    .newAPIHadoopFile(
-                        "file:///home/hrabo/Documents/skola/data-intensive-computing/project/data/WET/CC-MAIN-20180918130631-20180918150631-00000.warc.wet",
-    //                     "./data/WET/CC-MAIN-20180918130631-20180918150631-00000.warc.wet",
-                        classOf[TextInputFormat], 
-                        classOf[LongWritable], 
-                        classOf[Text], 
-                        conf
-                    )
+	val dataset = spark
+                .sparkContext
+                .newAPIHadoopFile(
+                    "file:///home/hrabo/Documents/skola/data-intensive-computing/project/data/WET/*.wet",
+//                     "./data/WET/CC-MAIN-20180918130631-20180918150631-00000.warc.wet",
+                    classOf[TextInputFormat], 
+                    classOf[LongWritable], 
+                    classOf[Text], 
+                    conf
+                )
 
-	val tempdata = dataset.map(x=>x._2.toString)      
-	val data = tempdata.mapPartitionsWithIndex {  // Drop invalid records
-						(idx, iter) => if (idx == 0) iter.drop(2) else iter 
-					}
+	var tempdata = dataset.map(x=>x._2.toString).toDF();
+
+	// Filter empty stuff
+	tempdata = tempdata.filter(length($"value") > 0)
+
+	// Split header
+	tempdata = tempdata.withColumn("header", 
+							split($"value", "\r\n\r\n").getItem(0)
+						)
+						.withColumn("text", 
+							split($"value", "\r\n\r\n").getItem(1)
+						)
+						.drop("value")
+
+	// preparse header
+	tempdata = tempdata.withColumn("header",
+							split($"header", "\r\n")
+						)
+
+	// Filter on warc type (remove info)
+	tempdata = tempdata.withColumn("warc-type",
+						($"header").getItem(1)
+					)
+					.filter($"warc-type" === "WARC-Type: conversion")
+					.drop("warc-type")
 
 
-	// List of tuples containing (metadata, file_content)
-	val uriDataPairs = data.map(record => (record.split("\r\n\r\n")))
-						.map(dataItemAsList => {
-								// Pairs of (Property, Value) from the meta data
-								val keyValuePairs = dataItemAsList(0).split("\r\n").filter(_ != "").map(line => {
-									val splitList = line.split(": ")
-									((splitList(0), splitList(1)))
-								}) 
-								
-								// Selecting the first (and only) record and the value from that
-								val targetURL = keyValuePairs.filter(_._1 == "WARC-Target-URI")(0)._2
-								val recordType = keyValuePairs.filter(_._1 == "WARC-Type")(0)._2
-								
-								((targetURL,dataItemAsList(1)))
-						})//.take(2)(1)._1
+	// Extract uri
+	tempdata = tempdata.withColumn("uri",
+							($"header").getItem(2)
+						)
+						.withColumn("uri",
+							split($"uri", ": ").getItem(1)
+						)
+						.drop("header")
 
-	// Create DF
-	val pageInfo = uriDataPairs.map(item => {
-		val host = new URL(item._1).getHost
-		val domainParts = host.replaceAll("""([^\.]*+\.)""", "") // Replace everything except top domain
-		(item._1, domainParts, item._2)
-	})
+	// Extract domain
+	val regexpr = """[^((https?):\/\/)]((www|www1)\.)?([\w-\.]+)"""
+	tempdata = tempdata.withColumn("domain",
+						regexp_extract($"uri", regexpr, 0)
+					)
+					
 
-	val pageInfoDF = pageInfo.toDF("uri", "topDomain", "text")
+	val pageInfoDF = tempdata
+
+	// We can join on domain here from pagerank!
+	///////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////
+
 
 	val extractKeyWords = udf[Array[(String, Int)], String](input => {
 		val stopWords = Set("i","me","my","myself","we","our","ours","ourselves","you","your","yours","yourself","yourselves","he","him","his","himself","she","her","hers","herself","it","its","itself","they","them","their","theirs","themselves","what","which","who","whom","this","that","these","those","am","is","are","was","were","be","been","being","have","has","had","having","do","does","did","doing","a","an","the","and","but","if","or","because","as","until","while","of","at","by","for","with","about","against","between","into","through","during","before","after","above","below","to","from","up","down","in","out","on","off","over","under","again","further","then","once","here","there","when","where","why","how","all","any","both","each","few","more","most","other","some","such","no","nor","not","only","own","same","so","than","too","very","s","t","can","will","just","don","should","now")
@@ -110,12 +136,10 @@ object keywordExtraction {
 	// keywords total = 15 000 000
 	// total_nr_records = 39653
 	val keywordsExpandedDF = keywordDF
-								.select("keywords", "uri")
-								.withColumn("keywords", explode(($"keywords")))
-								.select("keywords._1", "keywords._2", "uri")
-								.withColumnRenamed("_1", "keyword")
-								.withColumnRenamed("_2", "keyword_weight")
-	// keywordsExpandedDF.show
+                            .withColumn("keywords", explode(($"keywords")))
+                            .withColumn("keyword", $"keywords._1")
+                            .withColumn("keyword_weight", $"keywords._2")
+							.drop("keywords")
 
 	var reverseIndex = keywordsExpandedDF
                         .groupBy($"keyword")
