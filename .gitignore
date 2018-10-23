@@ -10,3 +10,7 @@ extract-keywords/target/
 .ipynb_checkpoints/
 extract-keywords-2/project/target/
 extract-keywords-2/target/
+
+
+search-engine-indexing/project/target
+search-engine-indexing/target
