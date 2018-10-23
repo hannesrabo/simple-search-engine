@@ -1,4 +1,4 @@
-package keywordExtraction
+package SearchEngineIndexing
 
 import org.apache.spark.SparkConf
 import org.apache.spark.storage.StorageLevel
@@ -11,7 +11,6 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat
 import org.apache.spark.sql.cassandra._
 import com.datastax.spark.connector._
 import com.datastax.driver.core.{Session, Cluster, Host, Metadata}
-// import com.datastax.spark.connector.streaming._
 
 import java.net.URL
 
@@ -23,15 +22,18 @@ import org.apache.spark._
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 
-import java.net.URL
-object keywordExtraction {
+object SearchEngineIndexing {
 
 	def getRanks() = {
+		val spark = SparkSession
+					.builder
+					.master("local[*]")
+					.appName("SparkSQL Web Indexing")
+					.getOrCreate()
 		
-		val spark = SparkSession.builder.master("local[*]").appName("SparkSQL").getOrCreate()
-
 		import spark.implicits._
 
+		// Splitting input data
 		val conf = new Configuration
 		conf.set("textinputformat.record.delimiter", "WARC/1.0")
 		val dataset = spark
@@ -189,7 +191,7 @@ object keywordExtraction {
 		val spark = SparkSession
 					.builder
 					.master("local[*]")
-					.appName("SparkSQL")
+					.appName("SparkSQL Web Indexing")
 					.config("spark.cassandra.connection.host", "127.0.0.1")
 					.config("spark.cassandra.output.batch.size.bytes", "5000")
 					.config("spark.cassandra.output.concurrent.writes", "10")
@@ -198,9 +200,10 @@ object keywordExtraction {
 					// .config("spark.cassandra.output.batch.grouping.key", "replica_set") 
 					.getOrCreate()
 
-		spark.sparkContext.setLogLevel("ERROR")
-
+		
 		import spark.implicits._
+
+		spark.sparkContext.setLogLevel("ERROR")
 
 		// Reading the file from disk
 		val conf = new Configuration
@@ -259,10 +262,9 @@ object keywordExtraction {
 						)
 						
 
+		// Adding the pagerank
 		val ranksDF = getRanks()
-
 		val pageInfoDF = tempdata.join(ranksDF, "domain")
-
 
 		val extractKeyWords = udf[Array[(String, Int)], String](input => {
 			val stopWords = Set("i","me","my","myself","we","our","ours","ourselves","you","your","yours","yourself","yourselves","he","him","his","himself","she","her","hers","herself","it","its","itself","they","them","their","theirs","themselves","what","which","who","whom","this","that","these","those","am","is","are","was","were","be","been","being","have","has","had","having","do","does","did","doing","a","an","the","and","but","if","or","because","as","until","while","of","at","by","for","with","about","against","between","into","through","during","before","after","above","below","to","from","up","down","in","out","on","off","over","under","again","further","then","once","here","there","when","where","why","how","all","any","both","each","few","more","most","other","some","such","no","nor","not","only","own","same","so","than","too","very","s","t","can","will","just","don","should","now")
@@ -279,53 +281,48 @@ object keywordExtraction {
 			.sortBy(- _._2)
 		})
 
+		// Extract keywords from text.
 		val keywordDF = pageInfoDF.withColumn(
 			"keywords",
 			extractKeyWords(col("text"))
 		)
 
-		// create one list with all keywords
+		// Some Stats
 		// keywords distinct = 2017741 (.distinct.count)
 		// keywords total = 15 000 000
 		// total_nr_records = 39653
+
+		// create one list with all keywords
 		val keywordsExpandedDF = keywordDF
 								.withColumn("keywords", explode(($"keywords")))
 								.withColumn("keyword", $"keywords._1")
 								.withColumn("keyword_weight", $"keywords._2")
 								.drop("keywords")
 
+		// Creating the reversed index
 		var reverseIndex = keywordsExpandedDF
-							.groupBy($"keyword")
+							.groupBy($"keyword")	// This is very heavy...
 							.agg(
 								collect_list($"uri").alias("links"), 
 								collect_list($"keyword_weight").alias("occurences"),
 								collect_list($"pageRank").alias("page_ranks")
 								)
-							// .sortBy($"keyword")						  			// Apparently sorting on partition key can drastically improve performance. This is probably not the way to go
-							.select("keyword", "links", "occurences", "page_ranks") // Make sure we are not getting any tray columns
+							// Apparently sorting on partition key can drastically improve performance. This is probably not the way to go though	
+							// .sortBy($"keyword")						  			
+							.select("keyword", "links", "occurences", "page_ranks") // Make sure we are not getting any stray columns
 
-							// We can probably collect as struct collect_list(struct($"uri", $"keyword_weight")).as("set")
-							// This would allow easier sorting here which might not be any idea anyway
-							// This might however lead to problems: https://stackoverflow.com/questions/31864744/spark-dataframes-groupby-into-list
-							
-		// Showing here takes 1 minute
-		// reducedKeywords.show() 
-
+		// Set up database
 		session.execute("CREATE KEYSPACE IF NOT EXISTS search WITH REPLICATION =" +
 						"{'class': 'SimpleStrategy', 'replication_factor': 1};")
-		session.execute("CREATE TABLE IF NOT EXISTS search.keywords (keyword text PRIMARY KEY, links list<text>, occurences list<int>, page_ranks list<string>);")
-		// session.close()
+		session.execute("CREATE TABLE IF NOT EXISTS search.keywords (keyword text PRIMARY KEY, links list<text>, occurences list<int>, page_ranks list<double>);")
 
-
+		// Pushing the results to a cassandra database
 		reverseIndex
 			.write
 			.format("org.apache.spark.sql.cassandra")
 			.cassandraFormat("keywords", "search")
-		//     .mode(SaveMode.Append)
+		    // .mode(SaveMode.Replace)
 			.save()
-
-		// store the result in Cassandra
-		// stateDstream.saveToCassandra("avg_space", "avg", SomeColumns("word", "count"))
 
 		session.close()
 	}

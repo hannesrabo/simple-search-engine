@@ -1,4 +1,4 @@
-package keywordExtraction
+package KeywordExtraction
 
 import org.apache.spark.SparkConf
 import org.apache.spark.storage.StorageLevel
@@ -18,7 +18,7 @@ import java.net.URL
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._ 
 
-object keywordExtraction {
+object KeywordExtraction {
   def main(args: Array[String]) {
 
     // connect to Cassandra and make a keyspace and table as explained in the document
