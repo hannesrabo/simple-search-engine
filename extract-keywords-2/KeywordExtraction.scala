@@ -37,7 +37,8 @@ object keywordExtraction {
 		val dataset = spark
 			.sparkContext
 			.newAPIHadoopFile(
-				"../data/WAT/",
+				// "../data/WAT/",
+				"file:///home/hrabo/Documents/skola/data-intensive-computing/project/data/WAT/*.wat",
 				classOf[TextInputFormat],
 				classOf[LongWritable],
 				classOf[Text],
@@ -197,6 +198,8 @@ object keywordExtraction {
 					// .config("spark.cassandra.output.batch.grouping.key", "replica_set") 
 					.getOrCreate()
 
+		spark.sparkContext.setLogLevel("ERROR")
+
 		import spark.implicits._
 
 		// Reading the file from disk
@@ -205,8 +208,8 @@ object keywordExtraction {
 		val dataset = spark
 					.sparkContext
 					.newAPIHadoopFile(
-						// "file:///home/hrabo/Documents/skola/data-intensive-computing/project/data/WET/*.wet",
-							"../data/WET/*.wet",
+						"file:///home/hrabo/Documents/skola/data-intensive-computing/project/data/WET/*.wet",
+							// "../data/WET/*.wet",
 						classOf[TextInputFormat], 
 						classOf[LongWritable], 
 						classOf[Text], 
@@ -260,19 +263,6 @@ object keywordExtraction {
 
 		val pageInfoDF = tempdata.join(ranksDF, "domain")
 
-		pageInfoDF.show()
-
-		// We can join on domain here from pagerank!
-		///////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////
-
 
 		val extractKeyWords = udf[Array[(String, Int)], String](input => {
 			val stopWords = Set("i","me","my","myself","we","our","ours","ourselves","you","your","yours","yourself","yourselves","he","him","his","himself","she","her","hers","herself","it","its","itself","they","them","their","theirs","themselves","what","which","who","whom","this","that","these","those","am","is","are","was","were","be","been","being","have","has","had","having","do","does","did","doing","a","an","the","and","but","if","or","because","as","until","while","of","at","by","for","with","about","against","between","into","through","during","before","after","above","below","to","from","up","down","in","out","on","off","over","under","again","further","then","once","here","there","when","where","why","how","all","any","both","each","few","more","most","other","some","such","no","nor","not","only","own","same","so","than","too","very","s","t","can","will","just","don","should","now")
@@ -323,7 +313,7 @@ object keywordExtraction {
 
 		session.execute("CREATE KEYSPACE IF NOT EXISTS search WITH REPLICATION =" +
 						"{'class': 'SimpleStrategy', 'replication_factor': 1};")
-		session.execute("CREATE TABLE IF NOT EXISTS search.keywords (keyword text PRIMARY KEY, links list<text>, occurences list<int>);")
+		session.execute("CREATE TABLE IF NOT EXISTS search.keywords (keyword text PRIMARY KEY, links list<text>, occurences list<int>, page_ranks list<string>);")
 		// session.close()
 
 
@@ -334,8 +324,8 @@ object keywordExtraction {
 		//     .mode(SaveMode.Append)
 			.save()
 
-		store the result in Cassandra
-		stateDstream.saveToCassandra("avg_space", "avg", SomeColumns("word", "count"))
+		// store the result in Cassandra
+		// stateDstream.saveToCassandra("avg_space", "avg", SomeColumns("word", "count"))
 
 		session.close()
 	}
