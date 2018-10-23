@@ -298,7 +298,7 @@ object keywordExtraction {
 							.groupBy($"keyword")
 							.agg(
 								collect_list($"uri").alias("links"), 
-								collect_list($"keyword_weight").alias("occurences")
+								collect_list($"keyword_weight").alias("occurences"),
 								collect_list($"pageRank").alias("page_ranks")
 								)
 							// .sortBy($"keyword")						  			// Apparently sorting on partition key can drastically improve performance. This is probably not the way to go
