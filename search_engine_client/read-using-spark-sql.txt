@@ -1,0 +1,15 @@
+    val df = spark
+    .read
+    .format("org.apache.spark.sql.cassandra")
+    .options(Map( "table" -> "keywords", "keyspace" -> "search" ))
+    .load()
+
+    val raw = df.filter($"keyword" === "hannes").drop("keyword")
+
+    val links = raw.select("links").withColumn("links", explode($"links")).withColumn("id", monotonically_increasing_id())
+    val occ = raw.select("occurences").withColumn("occurences", explode($"occurences")).withColumn("id", monotonically_increasing_id())
+    val pr = raw.select("page_ranks").withColumn("page_ranks", explode($"page_ranks")).withColumn("id", monotonically_increasing_id())
+    
+    val fin = links.join(occ, links("id") === occ("id"), "inner")
+                   .join(pr, links("id") === pr("id"), "inner")
+                   .select("links", "occurences", "page_ranks").show()
