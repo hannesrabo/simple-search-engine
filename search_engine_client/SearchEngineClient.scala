@@ -14,19 +14,10 @@ import com.datastax.spark.connector.rdd.ReadConf
 
 import scala.collection.mutable.WrappedArray
 
+import scala.Console
+
 object searchEngineClient {
   def main(args: Array[String]) {
-    // val cluster = Cluster.builder().addContactPoint("127.0.0.1").build()
-    // val session = cluster.connect()
-
-    // // Create sparksession
-    // val spark = SparkSession.builder
-    //   .master("local[*]")
-    //   .appName("SparkSQL")
-    //   .config("spark.cassandra.connection.host", "127.0.0.1")
-    //   .config("spark.cassandra.output.batch.size.bytes", "5000")
-    //   .config("spark.cassandra.output.concurrent.writes", "10")
-    //   .getOrCreate()
 
     val spark = SparkSession.builder
       .master("local[*]")
@@ -48,7 +39,8 @@ object searchEngineClient {
     var input = ""
 
     do {
-      println("Input search term: ")
+      println("\n=========================================")
+      print("Input search term: ")
       input = scala.io.StdIn.readLine()
 
       if (input != "") {
@@ -56,20 +48,31 @@ object searchEngineClient {
           .filter($"keyword" === input)
           .rdd
           .flatMap(row => {
-            // val keyword = row.get(0).asInstanceOf[String]
-            val links = row.get(0).asInstanceOf[WrappedArray[String]].toSeq
-            //   val occurences = row.get(2).asInstanceOf[WrappedArray[Int]]
-            //   val pageRanks = row.get(3).asInstanceOf[WrappedArray[Double]]
+            val links = row.getAs[Seq[String]](1)
+            val occurences = row.getAs[Seq[Int]](2)
+            val pageRanks = row.getAs[Seq[Double]](3)
 
-            //   // val temp = ((links zip occurences) zip pageRanks) //.map(x => (keyword, x._1, x._2, x._3))
-
-            //   // temp
-            // Seq(links)
-            links
+            (links, occurences, pageRanks).zipped.toList
+          })
+          .map(x => (x._1, x._2 * x._3))
+          .sortBy(-_._2)
+          .map(x => {
+            val roundedScore = "%2.4f".format(x._2)
+            (x._1, roundedScore)
           })
 
-        resultRDD.take(2).foreach(println)
+        val results = resultRDD.take(20)
+
+        println("\n" + Console.GREEN + "Results: " + Console.RESET + "\n")
+        results.foreach(result =>
+          println(
+            "[" + Console.GREEN + result._2 + Console.RESET + "] " + result._1))
+
+        println("Showing 20 of " + resultRDD.count() + " results")
+
       }
     } while (input != "");
+
+    spark.stop
   }
 }
