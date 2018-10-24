@@ -1,4 +1,4 @@
-# Search engine project
+# Simple Search Engine
 
 In this project we have created a search engine using spark and hadoop for indexing, cassandra for storage and a client in spark. It was a school project for the course Data Intensive Computing Platforms in KTH.
 
