@@ -4,7 +4,7 @@ In this project we have created a search engine using spark and hadoop for index
 
 It parses keywords from web sites, to filter websites and uses links to create a [PageRank](https://en.wikipedia.org/wiki/PageRank). The scoring system for sorting websites is a combination of relevance (number of times keyword appears on per page) and importance (PageRank).
 
-We recomend using web crawler data from [Common Crawl](http://commoncrawl.org). With only a very small subset the search engine performed surprisingly well, however with more computing power or / and time you could index a larger part of the internet.
+We recommend using web crawler data from [Common Crawl](http://commoncrawl.org). With only a very small subset the search engine performed surprisingly well, however with more computing power or / and time you could index a larger part of the internet.
 
 ## Screenshot
 
