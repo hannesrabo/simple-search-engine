@@ -16,7 +16,7 @@ The search engine parses keywords from web sites, to filter websites and uses li
 
 The primary tool used was Spark, where both Spark SQL and Spark GraphX was used. Spark, together with hadoop loader, was used for processing the data and to store the processed information Cassandra was used. Finally the client was a simple Spark program to enable a final filter and computation on the dataset.
 
-Data
+## Data
 
 The dataset came from Common Crawl which facilitates web crawl data from over 5 billion web pages. As it consists of many terabytes of data, even in the most condensed form, we could not use all of it. We chose to use a small subset of the dataset to show a proof of concept.T he kinds of computation that is required for this task is often executed by large data centers, which is equipment we do not have access to.
 
@@ -26,7 +26,7 @@ As both methods were evaluated to be impossible we downloaded a random subset. W
 
 The data can be downloaded in three different formats: WARC, WAT and WET. WARC is a very comprehensive and verbose format which basically includes all the raw data from the web crawl. WAT is a format where the computed metadata from the raw WARC file is stored. WET is a format with extracted plaintext from the WARC file. WAT files was used for using links for rating web pages. WET files was used to categorize web pages after their content.
 
-Algorithm
+## Algorithm
 
 There were two major steps to index websites with out method. One is categorizing web pages so that a search result show all relevant web pages with matching content. The other task is to rate the web pages so that the more relevant web pages are prioritized.
 
