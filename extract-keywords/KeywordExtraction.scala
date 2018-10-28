@@ -46,8 +46,8 @@ object KeywordExtraction {
     val dataset = spark
                     .sparkContext
                     .newAPIHadoopFile(
-                        "file:///home/hrabo/Documents/skola/data-intensive-computing/project/data/WET/CC-MAIN-20180918130631-20180918150631-00000.warc.wet",
-    //                     "./data/WET/CC-MAIN-20180918130631-20180918150631-00000.warc.wet",
+                        // "file:///home/hrabo/Documents/skola/data-intensive-computing/project/data/WET/CC-MAIN-20180918130631-20180918150631-00000.warc.wet",
+                        "../data/WET/",
                         classOf[TextInputFormat], 
                         classOf[LongWritable], 
                         classOf[Text], 

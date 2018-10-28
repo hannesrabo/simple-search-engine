@@ -39,8 +39,8 @@ object SearchEngineIndexing {
 		val dataset = spark
 			.sparkContext
 			.newAPIHadoopFile(
-				// "../data/WAT/",
-				"file:///home/hrabo/Documents/skola/data-intensive-computing/the-search-engine-duotrigintillion/data/WAT/*.wat",
+				"../data/WAT/",
+				// "file:///home/hrabo/Documents/skola/data-intensive-computing/the-search-engine-duotrigintillion/data/WAT/*.wat",
 				classOf[TextInputFormat],
 				classOf[LongWritable],
 				classOf[Text],
