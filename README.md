@@ -90,4 +90,4 @@ It should look like following screenshot where the numbers to the left represent
 > For further details see [LICENSE](LICENSE) file.
 
 [license-img]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
-[license-url]: https://github.com/juliuscc/cputemp-macos/blob/master/LICENSE
+[license-url]: https://github.com/hannesrabo/simple-search-engine/blob/master/LICENSE
