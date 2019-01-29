@@ -67,6 +67,7 @@ It should look like following screenshot where the numbers to the left represent
 > The [`MIT`][license-url] License (MIT)
 >
 > Copyright (c) 2018 Hannes Rabo
+>
 > Copyright (c) 2018 Julius Recep Colliander Celik
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -90,4 +91,4 @@ It should look like following screenshot where the numbers to the left represent
 > For further details see [LICENSE](LICENSE) file.
 
 [license-img]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
-[license-url]: https://github.com/juliuscc/simple-search-engine/blob/master/LICENSE
+[license-url]: /LICENSE
