@@ -67,7 +67,6 @@ It should look like following screenshot where the numbers to the left represent
 > The [`MIT`][license-url] License (MIT)
 >
 > Copyright (c) 2018 Hannes Rabo
->
 > Copyright (c) 2018 Julius Recep Colliander Celik
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy
