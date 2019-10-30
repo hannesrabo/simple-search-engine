@@ -18,7 +18,7 @@ The primary tool used was Spark, where both Spark SQL and Spark GraphX was used.
 
 ## Data
 
-The dataset came from Common Crawl which facilitates web crawl data from over 5 billion web pages. As it consists of many terabytes of data, even in the most condensed form, we could not use all of it. We chose to use a small subset of the dataset to show a proof of concept.T he kinds of computation that is required for this task is often executed by large data centers, which is equipment we do not have access to.
+The dataset came from Common Crawl which facilitates web crawl data from over 5 billion web pages. As it consists of many terabytes of data, even in the most condensed form, we could not use all of it. We chose to use a small subset of the dataset to show a proof of concept. The kinds of computation that is required for this task is often executed by large data centers, which is equipment we do not have access to.
 
 Preferably the data should not be too disjointed, as a more connected set of web pages result in more accurate ranking. Two methods of requiring the data was evaluated and abandoned as they were deemed impossible. The first method would be to only collect crawler data for some domains; The top 100 or 1000 domains. This would lead to a more relevant subset. The other method discussed was to only require crawler data for one top domain, basically indexing the internet for a country.
 
@@ -90,4 +90,4 @@ It should look like following screenshot where the numbers to the left represent
 > For further details see [LICENSE](LICENSE) file.
 
 [license-img]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
-[license-url]: https://github.com/hannesrabo/simple-search-engine/blob/master/LICENSE
+[license-url]: /LICENSE
